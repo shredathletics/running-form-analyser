@@ -204,7 +204,7 @@
 
         async function checkServerHealth() {
             try {
-                const response = await fetch('http://127.0.0.1:8000/health');
+                const response = await fetch('https://shred-running-analysis.onrender.com/health');
                 if (!response.ok) {
                     throw new Error('Server health check failed');
                 }
@@ -240,7 +240,7 @@
             formData.append('video', file);
 
             try {
-                const response = await fetch('http://127.0.0.1:8000/analyse-running', {
+                const response = await fetch('https://shred-running-analysis.onrender.com/analyse-running', {
                     method: 'POST',
                     body: formData
                 });
