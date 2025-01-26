@@ -15,14 +15,13 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-# Configure CORS for all domains
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=["https://shredathletics.github.io"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
-    expose_headers=["*"]  # Exposes all headers
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
 # Initialize MediaPipe Pose with more robust settings

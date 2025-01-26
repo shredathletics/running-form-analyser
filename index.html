@@ -319,6 +319,10 @@
         const recommendationsText = document.getElementById('recommendationsText');
         const progressBar = document.getElementById('progressBar');
 
+        const baseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://127.0.0.1:8000'
+            : 'https://shred-running-analysis.onrender.com';
+
         // Drag and drop functionality
         uploadSection.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -348,7 +352,7 @@
 
         async function checkServerHealth() {
             try {
-                const response = await fetch('http://127.0.0.1:8000/health');
+                const response = await fetch(`${baseUrl}/health`);
                 if (!response.ok) {
                     throw new Error('Server health check failed');
                 }
@@ -392,7 +396,7 @@
             formData.append('video', file);
 
             try {
-                const response = await fetch('http://127.0.0.1:8000/analyse-running', {
+                const response = await fetch(`${baseUrl}/analyse-running`, {
                     method: 'POST',
                     body: formData
                 });
