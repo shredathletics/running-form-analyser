@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shred Athletics - Running Form Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0066FF;
+            --secondary-color: #1E1E1E;
+            --accent-color: #FFD700;
+            --background-color: #F8F9FA;
+            --text-color: #2C3E50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo img {
+            height: 40px;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+
+        .upload-section {
+            text-align: center;
+            padding: 3rem;
+            border: 2px dashed #E0E0E0;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(0,102,255,0.02);
+        }
+
+        .upload-button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-button:hover {
+            background-color: #0052CC;
+            transform: translateY(-1px);
+        }
+
+        .results-section {
+            display: none;
+            margin-top: 2rem;
+        }
+
+        .score-card {
+            background: linear-gradient(135deg, var(--primary-color), #0052CC);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .score {
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 1rem 0;
+        }
+
+        .recommendations {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <a href="#" class="logo">
+                Shred Athletics Running Analysis
+            </a>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="main-content">
+            <div class="upload-section" id="uploadSection">
+                <h2>Analyse Your Running Form</h2>
+                <p>Upload a video of your running to get personalised feedback</p>
+                <input type="file" id="videoInput" accept="video/*" style="display: none;">
+                <button class="upload-button" onclick="document.getElementById('videoInput').click()">
+                    Upload Video
+                </button>
+                <p style="margin-top: 1rem; color: #6c757d;">Supported formats: MP4, MOV, AVI (Max 100MB)</p>
+            </div>
+
+            <div class="loading" id="loadingSection">
+                <div class="loading-spinner"></div>
+                <p>Analysing your running form...</p>
+            </div>
+
+            <div class="results-section" id="resultsSection">
+                <div class="score-card">
+                    <h3>Your Running Form Score</h3>
+                    <div class="score" id="scoreDisplay">0</div>
+                </div>
+
+                <div class="recommendations">
+                    <h3>Detailed Analysis & Recommendations</h3>
+                    <div id="recommendationsText"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>© 2025 Shred Athletics. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        const videoInput = document.getElementById('videoInput');
+        const uploadSection = document.getElementById('uploadSection');
+        const loadingSection = document.getElementById('loadingSection');
+        const resultsSection = document.getElementById('resultsSection');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const recommendationsText = document.getElementById('recommendationsText');
+
+        async function checkServerHealth() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/health');
+                if (!response.ok) {
+                    throw new Error('Server health check failed');
+                }
+                console.log('Server is healthy');
+                return true;
+            } catch (error) {
+                console.error('Server health check error:', error);
+                return false;
+            }
+        }
+
+        async function uploadVideo(file) {
+            if (!await checkServerHealth()) {
+                alert('Server is not responding. Please try again later.');
+                return;
+            }
+
+            if (file.size > 100 * 1024 * 1024) {
+                alert('File size must be less than 100MB');
+                return;
+            }
+
+            const allowedTypes = ['video/mp4', 'video/quicktime', 'video/avi'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Please upload a video file (MP4, MOV, or AVI)');
+                return;
+            }
+
+            uploadSection.style.display = 'none';
+            loadingSection.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('video', file);
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/analyse-running', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Analysis failed');
+                }
+
+                const result = await response.json();
+                displayResults(result);
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('An error occurred during analysis. Please try again.');
+                uploadSection.style.display = 'block';
+            } finally {
+                loadingSection.style.display = 'none';
+            }
+        }
+
+        function displayResults(data) {
+            const resultsSection = document.getElementById('resultsSection');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const recommendationsText = document.getElementById('recommendationsText');
+            
+            // Display overall score
+            scoreDisplay.textContent = `${data.overall_score}/100`;
+            
+            // Create detailed analysis section
+            let analysisHtml = `
+                <h2>Detailed Analysis & Recommendations</h2>
+                <p class="overall-score">Overall Score: ${data.overall_score}/100</p>
+                
+                <h3>Stride Analysis</h3>
+                <p>${data.stride_length ? 
+                    `Average stride consistency: ${data.stride_length.consistency.toFixed(1)}%` : 
+                    'Stride data not available'}</p>
+                
+                <h3>Posture Analysis</h3>
+                <p>${data.knee_angle ? 
+                    `Average knee angle: ${data.knee_angle.average.toFixed(1)}°` : 
+                    'Posture data not available'}</p>
+                
+                <h3>Recommendations</h3>
+                <ul>
+                    ${data.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                </ul>
+            `;
+            
+            recommendationsText.innerHTML = analysisHtml;
+            resultsSection.style.display = 'block';
+        }
+
+        videoInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                uploadVideo(file);
+            }
+        });
+
+        // Initialize
+        checkServerHealth().then(isHealthy => {
+            if (!isHealthy) {
+                alert('Server is not available. Please try again later.');
+            }
+        });
+    </script>
+</body>
+</html> 
