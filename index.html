@@ -36,8 +36,11 @@
         .header {
             background-color: white;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 1rem 0;
-            margin-bottom: 2rem;
+            padding: 1.5rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
         }
 
         .logo {
@@ -54,11 +57,31 @@
             height: 40px;
         }
 
+        .hero-section {
+            padding: 8rem 0 4rem;
+            text-align: center;
+            background: linear-gradient(135deg, #f6f9fc 0%, #edf2f7 100%);
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
         .main-content {
             background: white;
             border-radius: 20px;
             padding: 2rem;
             box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            margin-top: -4rem;
+            position: relative;
         }
 
         .upload-section {
@@ -68,11 +91,18 @@
             border-radius: 12px;
             margin-bottom: 2rem;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
 
-        .upload-section:hover {
+        .upload-section.drag-over {
             border-color: var(--primary-color);
-            background-color: rgba(0,102,255,0.02);
+            background-color: rgba(0,102,255,0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
         }
 
         .upload-button {
@@ -90,6 +120,23 @@
         .upload-button:hover {
             background-color: #0052CC;
             transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,102,255,0.2);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e2e8f0;
+            border-radius: 4px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s ease;
         }
 
         .results-section {
@@ -104,12 +151,26 @@
             border-radius: 12px;
             text-align: center;
             margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .score-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            transform: rotate(45deg);
         }
 
         .score {
-            font-size: 3rem;
+            font-size: 4rem;
             font-weight: 700;
             margin: 1rem 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
         .recommendations {
@@ -117,6 +178,23 @@
             padding: 2rem;
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .recommendation-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            margin-right: 1rem;
+            color: var(--primary-color);
         }
 
         .loading {
@@ -145,6 +223,33 @@
             padding: 2rem 0;
             color: #6c757d;
             font-size: 0.9rem;
+            margin-top: 4rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+
+            .main-content {
+                padding: 1.5rem;
+            }
+
+            .upload-section {
+                padding: 2rem 1rem;
+            }
+
+            .score {
+                font-size: 3rem;
+            }
         }
     </style>
 </head>
@@ -157,14 +262,22 @@
         </div>
     </header>
 
+    <section class="hero-section">
+        <div class="container">
+            <h1 class="hero-title">Professional Running Form Analysis</h1>
+            <p class="hero-subtitle">Upload a video of your running and get instant, AI-powered feedback to improve your form</p>
+        </div>
+    </section>
+
     <main class="container">
         <div class="main-content">
             <div class="upload-section" id="uploadSection">
-                <h2>Analyse Your Running Form</h2>
-                <p>Upload a video of your running to get personalised feedback</p>
+                <div class="upload-icon">📤</div>
+                <h2>Upload Your Running Video</h2>
+                <p>Drag and drop your video here or click to browse</p>
                 <input type="file" id="videoInput" accept="video/*" style="display: none;">
                 <button class="upload-button" onclick="document.getElementById('videoInput').click()">
-                    Upload Video
+                    Select Video
                 </button>
                 <p style="margin-top: 1rem; color: #6c757d;">Supported formats: MP4, MOV, AVI (Max 100MB)</p>
             </div>
@@ -172,6 +285,9 @@
             <div class="loading" id="loadingSection">
                 <div class="loading-spinner"></div>
                 <p>Analysing your running form...</p>
+                <div class="progress-bar">
+                    <div class="progress-bar-fill" id="progressBar"></div>
+                </div>
             </div>
 
             <div class="results-section" id="resultsSection">
@@ -201,6 +317,34 @@
         const resultsSection = document.getElementById('resultsSection');
         const scoreDisplay = document.getElementById('scoreDisplay');
         const recommendationsText = document.getElementById('recommendationsText');
+        const progressBar = document.getElementById('progressBar');
+
+        // Drag and drop functionality
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.classList.add('drag-over');
+        });
+
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.classList.remove('drag-over');
+        });
+
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                videoInput.files = e.dataTransfer.files;
+                uploadVideo(file);
+            }
+        });
+
+        videoInput.addEventListener('change', () => {
+            const file = videoInput.files[0];
+            if (file) {
+                uploadVideo(file);
+            }
+        });
 
         async function checkServerHealth() {
             try {
@@ -235,6 +379,14 @@
 
             uploadSection.style.display = 'none';
             loadingSection.style.display = 'block';
+            
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 5;
+                if (progress > 90) clearInterval(progressInterval);
+                progressBar.style.width = `${progress}%`;
+            }, 500);
 
             const formData = new FormData();
             formData.append('video', file);
@@ -249,63 +401,33 @@
                     throw new Error('Analysis failed');
                 }
 
-                const result = await response.json();
-                displayResults(result);
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                
+                const data = await response.json();
+                displayResults(data);
             } catch (error) {
-                console.error('Upload error:', error);
-                alert('An error occurred during analysis. Please try again.');
+                clearInterval(progressInterval);
+                alert('Error analysing video: ' + error.message);
                 uploadSection.style.display = 'block';
-            } finally {
                 loadingSection.style.display = 'none';
             }
         }
 
         function displayResults(data) {
-            const resultsSection = document.getElementById('resultsSection');
-            const scoreDisplay = document.getElementById('scoreDisplay');
-            const recommendationsText = document.getElementById('recommendationsText');
+            loadingSection.style.display = 'none';
+            resultsSection.style.display = 'block';
             
-            // Display overall score
             scoreDisplay.textContent = `${data.overall_score}/100`;
             
-            // Create detailed analysis section
-            let analysisHtml = `
-                <h2>Detailed Analysis & Recommendations</h2>
-                <p class="overall-score">Overall Score: ${data.overall_score}/100</p>
-                
-                <h3>Stride Analysis</h3>
-                <p>${data.stride_length ? 
-                    `Average stride consistency: ${data.stride_length.consistency.toFixed(1)}%` : 
-                    'Stride data not available'}</p>
-                
-                <h3>Posture Analysis</h3>
-                <p>${data.knee_angle ? 
-                    `Average knee angle: ${data.knee_angle.average.toFixed(1)}°` : 
-                    'Posture data not available'}</p>
-                
-                <h3>Recommendations</h3>
-                <ul>
-                    ${data.recommendations.map(rec => `<li>${rec}</li>`).join('')}
-                </ul>
-            `;
-            
-            recommendationsText.innerHTML = analysisHtml;
-            resultsSection.style.display = 'block';
+            const recommendations = data.recommendations;
+            recommendationsText.innerHTML = recommendations.map(rec => `
+                <div class="recommendation-item">
+                    <span class="recommendation-icon">💡</span>
+                    <div>${rec}</div>
+                </div>
+            `).join('');
         }
-
-        videoInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                uploadVideo(file);
-            }
-        });
-
-        // Initialize
-        checkServerHealth().then(isHealthy => {
-            if (!isHealthy) {
-                alert('Server is not available. Please try again later.');
-            }
-        });
     </script>
 </body>
 </html> 
